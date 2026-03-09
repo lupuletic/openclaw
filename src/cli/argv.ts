@@ -64,10 +64,9 @@ export function isRootHelpRequest(argv: string[]): boolean {
       }
       continue;
     }
-    if (arg.startsWith("-")) {
-      continue;
-    }
-    // Non-flag token is a subcommand — this is a subcommand-scoped help request.
+    // Unknown flag or non-flag token — not a pure root-level help request.
+    // This ensures `openclaw --bogus --help` falls through to normal argv
+    // parsing which validates the unknown flag instead of silently showing help.
     return false;
   }
   return false;
