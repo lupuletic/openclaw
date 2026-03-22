@@ -126,12 +126,21 @@ export async function resolveCronModelSelection(
   if (!modelOverride && !hooksGmailModelApplied) {
     const sessionModelOverride = params.sessionEntry.modelOverride?.trim();
     if (sessionModelOverride) {
-      const sessionProviderOverride =
-        params.sessionEntry.providerOverride?.trim() || resolvedDefault.provider;
+      const sessionProviderOverride = params.sessionEntry.providerOverride?.trim();
+      // When a provider override is set, always prepend it.  When absent,
+      // prefix the default provider only when the model ID contains slashes
+      // (e.g. "@cf/openai/gpt-oss-20b") so parseModelRef doesn't split on
+      // the wrong delimiter.  Slash-free strings are left bare so alias
+      // resolution in resolveAllowedModelRef still works.  #18556
+      const raw = sessionProviderOverride
+        ? `${sessionProviderOverride}/${sessionModelOverride}`
+        : sessionModelOverride.includes("/")
+          ? `${resolvedDefault.provider}/${sessionModelOverride}`
+          : sessionModelOverride;
       const resolvedSessionOverride = resolveAllowedModelRef({
         cfg: params.cfgWithAgentDefaults,
         catalog: await loadCatalogOnce(),
-        raw: `${sessionProviderOverride}/${sessionModelOverride}`,
+        raw,
         defaultProvider: resolvedDefault.provider,
         defaultModel: resolvedDefault.model,
       });
